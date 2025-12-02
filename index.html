@@ -19,6 +19,7 @@
                         'accent-green': '#10B981', // Xanh lá cây cho Success/Doanh thu
                         'light-bg': '#F9FAFB', // Nền siêu nhẹ
                         'card-border': '#E5E7EB', // Đường viền thẻ
+                        'one-to-one-fee': '#7C3AED', // Màu tím cho phí 1-1 (Mục mới)
                     },
                     fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
@@ -27,18 +28,19 @@
     </script>
     <style>
         body { 
-            font-family: 'Inter', sans-serif; 
+            font-family: 'Inter', sans-serif;
             background-color: #F3F4F6; /* Nền xám nhạt */
         }
         .card { 
-            background-color: #ffffff; 
+            background-color: #ffffff;
             padding: 24px; 
             border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Bóng đổ mềm hơn */
-            border: 1px solid var(--card-border); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* Bóng đổ mềm hơn */
+            border: 1px solid var(--card-border);
         }
         .input-field { 
-            width: 100%; 
+            width: 100%;
             padding: 12px;
             border: 1px solid #D1D5DB; 
             border-radius: 8px; 
@@ -50,7 +52,7 @@
             outline: none;
         }
         .btn-primary { 
-            background-color: #1D4ED8; 
+            background-color: #1D4ED8;
             color: white; 
             padding: 12px 24px; 
             border-radius: 8px;
@@ -63,7 +65,7 @@
             transform: translateY(-1px);
         }
         .btn-secondary { 
-            background-color: #F59E0B; 
+            background-color: #F59E0B;
             color: white; 
             padding: 12px 24px; 
             border-radius: 8px;
@@ -75,29 +77,28 @@
             background-color: #F97316;
             transform: translateY(-1px);
         }
-        /* FIX LỖI HÌNH ẢNH: Đã thay thế link ảnh nền lỗi bằng ảnh ổn định hơn */
         .hero-banner { 
-            background-image: linear-gradient(rgba(29, 78, 216, 0.8), rgba(29, 78, 216, 0.8)), url('https://images.unsplash.com/photo-1541339907198-e0875692f4cb?fit=crop&w=1200&h=400&q=80'); 
-            background-size: cover;
-            background-position: center; 
+            /* ĐÃ SỬA LỖI HÌNH ẢNH: Thay thế URL ảnh ngoài bằng dải màu gradient thuần CSS */
+            background: linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%);
             padding: 4rem 3rem; 
             border-radius: 16px; 
             margin-bottom: 2.5rem;
-            color: white; /* Đảm bảo chữ trắng */
+            color: white;
         }
         
         .responsive-table { 
             width: 100%;
-            border-collapse: separate; /* Dùng để border-radius hoạt động */
+            border-collapse: separate; 
             border-spacing: 0;
         }
         .responsive-table th, .responsive-table td { 
-            padding: 16px 20px; 
+            padding: 16px 20px;
             text-align: left;
             border-bottom: 1px solid #E5E7EB; 
         }
         .responsive-table thead th { 
-            background-color: #E0E7FF; /* Nền xanh nhạt cho header */
+            background-color: #E0E7FF;
+            /* Nền xanh nhạt cho header */
             color: #1D4ED8;
             font-weight: 700; 
             text-transform: uppercase; 
@@ -111,10 +112,14 @@
             border-bottom: none;
         }
         /* Thêm style cho border radius ở góc bảng */
-        .responsive-table thead tr:first-child th:first-child { border-top-left-radius: 12px; }
-        .responsive-table thead tr:first-child th:last-child { border-top-right-radius: 12px; }
-        .responsive-table tbody tr:last-child td:first-child { border-bottom-left-radius: 12px; }
-        .responsive-table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px; }
+        .responsive-table thead tr:first-child th:first-child { border-top-left-radius: 12px;
+        }
+        .responsive-table thead tr:first-child th:last-child { border-top-right-radius: 12px;
+        }
+        .responsive-table tbody tr:last-child td:first-child { border-bottom-left-radius: 12px;
+        }
+        .responsive-table tbody tr:last-child td:last-child { border-bottom-right-radius: 12px;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -151,12 +156,23 @@
         // 1. CẤU HÌNH & DỮ LIỆU CƠ BẢN
         // ----------------------------------------
         const CONFIG = {
-            FEE_PER_SESSION: 80000,
-            SESSIONS_PER_COURSE: 10 // Đã thiết lập khóa 10 buổi
+            FEE_PER_SESSION: 80000, // Lớp thường
+            ONE_TO_ONE_FEE: 200000, // Lớp Kèm 1-1 (Mục mới)
+            SESSIONS_PER_COURSE: 10 
         };
-        const CLASSES = [];
+        const CLASSES = ['1-1']; // Thêm lớp Kèm 1-1
         for (let g = 4; g <= 9; g++) {
             for (let i = 1; i <= 3; i++) CLASSES.push(`${g}.${i}`);
+        }
+
+        /**
+         * Lấy mức học phí theo loại lớp
+         * @param {string} classId - ID của lớp
+         * @returns {number} Mức học phí (VNĐ)
+         */
+        function getFeeByClass(classId) {
+            return classId === '1-1' ?
+                CONFIG.ONE_TO_ONE_FEE : CONFIG.FEE_PER_SESSION;
         }
 
         // ----------------------------------------
@@ -171,7 +187,8 @@
                     return (key === 'fees' || key === 'attendance' ? {} : []);
                 } 
             },
-            set(key, val) { localStorage.setItem(key, JSON.stringify(val)); },
+            set(key, val) { localStorage.setItem(key, JSON.stringify(val));
+            },
             init() {
                 // Ensure Admin user exists
                 let users = this.get('users');
@@ -288,7 +305,7 @@
                         </div>
                         <div onclick="app.renderFees()" class="card p-8 bg-gradient-to-br from-accent-green to-green-600 text-white border-none shadow-xl cursor-pointer transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
                             <i class="fas fa-coins text-5xl mb-4 opacity-70"></i>
-                            <p class="text-sm uppercase font-semibold opacity-90">Tổng Học Phí Đã Đóng</p>
+                            <p class="text-sm uppercase font-semibold opacity-90">Tổng Học Phí Đã Thu</p>
                             <p class="text-4xl font-extrabold mt-1">${stats.totalRevenue.toLocaleString('vi-VN')}₫</p>
                         </div>
                         <div onclick="app.renderAttendance()" class="card p-8 bg-gradient-to-br from-secondary-orange to-orange-600 text-white border-none shadow-xl cursor-pointer transition duration-300 hover:shadow-2xl hover:scale-[1.02]">
@@ -313,7 +330,7 @@
                         <button onclick="app.renderFees()" class="card flex flex-col items-center justify-center p-6 bg-light-bg hover:bg-green-100 transition duration-300 shadow-md border-l-4 border-accent-green hover:shadow-lg">
                             <i class="fas fa-file-invoice-dollar text-5xl text-accent-green mb-3"></i>
                             <span class="font-bold text-lg">Quản Lý Học Phí</span>
-                            <span class="text-sm text-gray-600">Theo dõi 10 buổi/đợt.</span>
+                            <span class="text-sm text-gray-600">Theo dõi buổi học đã đóng.</span>
                         </button>
                         <button onclick="app.renderReports()" class="card flex flex-col items-center justify-center p-6 bg-light-bg hover:bg-gray-200 transition duration-300 shadow-md border-l-4 border-gray-400 hover:shadow-lg">
                             <i class="fas fa-chart-line text-5xl text-gray-500 mb-3"></i>
@@ -332,13 +349,13 @@
                     students = students.filter(s => s.classId === classFilter);
                 }
 
-                let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classFilter ? 'selected' : ''}>Lớp ${c}</option>`).join('');
+                let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classFilter ? 'selected' : ''}>${c === '1-1' ? 'Kèm 1-1' : `Lớp ${c}`}</option>`).join('');
                 let rows = students.map((s, i) => `
                     <tr id="student-${s.id}">
                         <td class="text-center w-16">${i+1}</td>
                         <td class="font-semibold text-primary-blue min-w-[150px]">${s.name}</td>
                         <td class="text-gray-600 w-32">${s.phone || '<span class="italic text-red-400">Chưa có</span>'}</td>
-                        <td class="font-bold text-secondary-orange w-24">${s.classId}</td>
+                        <td class="font-bold ${s.classId === '1-1' ? 'text-one-to-one-fee' : 'text-secondary-orange'} w-24">${s.classId === '1-1' ? 'KÈM 1-1' : s.classId}</td>
                         <td class="text-center w-32">
                             <button onclick="showEditStudentModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.phone}', '${s.classId}')" class="text-white bg-primary-blue hover:bg-blue-700 text-sm px-3 py-1 rounded-full transition mr-2"><i class="fas fa-edit"></i> Sửa</button>
                             <button onclick="deleteStudent('${s.id}')" class="text-red-600 hover:text-red-800 text-lg"><i class="fas fa-trash-alt"></i></button>
@@ -347,7 +364,12 @@
                 `).join('');
                 document.getElementById('mainContent').innerHTML = `
                     <div class="card border-t-8 border-primary-blue">
-                        <h2 class="text-4xl font-extrabold text-primary-blue mb-8">DANH SÁCH HỌC SINH</h2>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-4xl font-extrabold text-primary-blue">DANH SÁCH HỌC SINH</h2>
+                            <button onclick="app.exportStudentList(document.getElementById('classFilter').value)" class="btn-primary !bg-accent-green hover:!bg-green-700">
+                                <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                            </button>
+                        </div>
                         
                         <div class="mb-6 p-4 bg-blue-50 rounded-xl shadow-inner border border-blue-200 flex items-center gap-4">
                             <label for="classFilter" class="font-bold text-lg text-primary-blue"><i class="fas fa-filter mr-2"></i> LỌC THEO LỚP:</label>
@@ -363,7 +385,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                                 <input id="newName" placeholder="Họ tên" class="input-field col-span-1 md:col-span-2">
                                 <input id="newPhone" placeholder="SĐT PH" class="input-field col-span-1">
-                                <select id="newClass" class="input-field col-span-1">${CLASSES.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+                                <select id="newClass" class="input-field col-span-1">${CLASSES.map(c => `<option value="${c}">${c === '1-1' ? 'Kèm 1-1' : `Lớp ${c}`}</option>`).join('')}</select>
                                 <button onclick="addStudent()" class="btn-secondary col-span-1 !py-3">THÊM</button>
                             </div>
                         </div>
@@ -398,14 +420,14 @@
 
                 const att = db.get('attendance')[selectedDate] || {};
                 let totalPresent = Object.values(att).filter(x => x && x.status === 'present').length;
-                let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classFilter ? 'selected' : ''}>Lớp ${c}</option>`).join('');
-
+                let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classFilter ? 'selected' : ''}>${c === '1-1' ? 'Kèm 1-1' : `Lớp ${c}`}</option>`).join('');
                 let rows = filteredStudents.map((s, i) => {
                     const status = att[s.id]?.status || 'absent';
                     const note = att[s.id]?.note || '';
                     const isPresent = status === 'present';
                     const feeData = fees[s.id]?.current || { paid: 0, remaining: 0 };
                     const maxPaid = CONFIG.SESSIONS_PER_COURSE;
+                    const feePerSession = getFeeByClass(s.classId); // Lấy phí theo loại lớp
 
                     let feeStatusHtml = '';
                     if (feeData.paid <= 0) {
@@ -415,13 +437,14 @@
                     } else {
                         feeStatusHtml = '<span class="bg-green-100 text-accent-green font-bold px-3 py-1 rounded-full text-xs">Đủ 10 buổi</span>';
                     }
-                   
+                    
                     return `
                         <tr id="att-${s.id}">
                             <td class="text-center w-16">${i+1}</td>
-                            <td class="font-bold ${isPresent ? 'text-primary-blue' : 'text-gray-600'}">${s.name} <span class="text-xs text-gray-500 font-normal ml-1">(${s.classId})</span></td>
+                            <td class="font-bold ${isPresent ? 'text-primary-blue' : 'text-gray-600'}">${s.name} <span class="text-xs text-gray-500 font-normal ml-1">(${s.classId === '1-1' ? 'Kèm 1-1' : `Lớp ${s.classId}`})</span></td>
                             <td class="text-center font-extrabold w-32">${feeData.paid} / ${maxPaid}</td>
-                            <td class="text-center min-w-[120px]">${feeStatusHtml}</td> <td class="text-center w-28">
+                            <td class="text-center min-w-[120px]">${feeStatusHtml}</td> 
+                            <td class="text-center w-28">
                                 <button onclick="toggleAttend('${s.id}', 'present', '${selectedDate}')" class="text-sm font-bold w-full p-2 rounded-lg transition ${isPresent ? 'bg-accent-green text-white shadow-md' : 'bg-gray-200 text-gray-500 hover:bg-green-100'}">
                                     <i class="fas fa-check"></i> Có mặt
                                 </button>
@@ -438,8 +461,13 @@
 
                 document.getElementById('mainContent').innerHTML = `
                     <div class="card border-t-8 border-secondary-orange">
-                        <h2 class="text-4xl font-extrabold text-primary-blue mb-4">QUẢN LÝ ĐIỂM DANH</h2>
-                        
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-4xl font-extrabold text-primary-blue">QUẢN LÝ ĐIỂM DANH</h2>
+                            <button onclick="app.exportAttendance(document.getElementById('attendanceDate').value, document.getElementById('classFilterAtt').value)" class="btn-primary !bg-accent-green hover:!bg-green-700">
+                                <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                            </button>
+                        </div>
+                    
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 p-4 bg-yellow-50 rounded-xl shadow-inner border border-yellow-200">
                             <div class="flex items-center gap-4 mb-3 md:mb-0">
                                 <label for="attendanceDate" class="font-bold text-lg text-primary-blue"><i class="fas fa-calendar-alt mr-2"></i> CHỌN NGÀY:</label>
@@ -461,12 +489,14 @@
                                     <tr>
                                         <th class="text-center">STT</th>
                                         <th>Họ Tên</th>
-                                        <th class="text-center">Buổi Đã Đóng</th>
-                                        <th class="text-center">Trạng Thái Học Phí</th> <th class="text-center" colspan="2">Tình Trạng (Chọn)</th>
+                                        <th class="text-center">Buổi Đã Đóng (10)</th>
+                                        <th class="text-center">Trạng Thái Học Phí</th> 
+                                        <th class="text-center" colspan="2">Tình Trạng (Chọn)</th>
                                         <th>Ghi chú</th>
                                     </tr>
                                 </thead>
-                                <tbody>${rows || '<tr><td colspan="7" class="text-center py-8 text-gray-500">Chưa có học sinh nào để điểm danh.</td></tr>'}</tbody> </table>
+                                <tbody>${rows || '<tr><td colspan="7" class="text-center py-8 text-gray-500">Chưa có học sinh nào để điểm danh.</td></tr>'}</tbody> 
+                            </table>
                         </div>
                         <div class="mt-8 flex flex-col sm:flex-row justify-between items-center bg-primary-blue text-white p-4 rounded-xl shadow-lg">
                             <p class="text-xl font-bold mb-2 sm:mb-0">TỔNG KẾT NGÀY ${app.getFormattedDate(selectedDate)}:</p>
@@ -477,125 +507,301 @@
             },
             
             // ─── QUẢN LÝ HỌC PHÍ ───
-            renderFees() {
+            renderFees(classFilter = 'all', searchQuery = '') { // MODIFIED: Added filters
                 const students = db.get('students').sort((a, b) => a.name.localeCompare(b.name, 'vi'));
                 const fees = db.get('fees');
-                const cost = CONFIG.FEE_PER_SESSION;
                 const maxPaid = CONFIG.SESSIONS_PER_COURSE;
 
-                let rows = students.map(s => {
+                // --- NEW FILTERING LOGIC ---
+                let filteredStudents = students;
+                if (classFilter !== 'all') {
+                    filteredStudents = filteredStudents.filter(s => s.classId === classFilter);
+                }
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    filteredStudents = filteredStudents.filter(s => 
+                        s.name.toLowerCase().includes(query) ||
+                        s.phone.includes(query)
+                    );
+                }
+                // --- END FILTERING LOGIC ---
+                
+                let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classFilter ? 'selected' : ''}>${c === '1-1' ? 'Kèm 1-1' : `Lớp ${c}`}</option>`).join('');
+                let rows = filteredStudents.map(s => { // Using filteredStudents
                     const data = fees[s.id]?.current || { paid: 0, remaining: 0 };
-                    const paidAmount = data.paid * cost;
-         
-                    const feeStatus = data.paid >= maxPaid ? 
-                        '<span class="text-accent-green font-extrabold">Đủ 10 buổi</span>' : 
-                        `<span class="text-red-500 font-extrabold">Thiếu ${maxPaid - data.paid} buổi</span>`;
+                    const feePerSession = getFeeByClass(s.classId); // Using getFeeByClass
+                    const paidAmount = data.paid * feePerSession;
+                    const feeDisplay = s.classId === '1-1' 
+                        ? `<span class="text-one-to-one-fee font-bold">${feePerSession.toLocaleString('vi-VN')}₫</span>` 
+                        : `<span class="text-primary-blue font-bold">${feePerSession.toLocaleString('vi-VN')}₫</span>`;
 
                     return `
                         <tr>
-                            <td class="font-bold text-gray-800 min-w-[150px]">${s.name} <span class="text-xs text-gray-500 block font-normal">Lớp ${s.classId}</span></td>
+                            <td class="font-bold text-gray-800 min-w-[150px]">${s.name}</td>
+                            <td>${s.classId === '1-1' ? 'Kèm 1-1' : s.classId}</td>
+                            <td class="text-right">${feeDisplay}</td> 
                             <td class="text-center font-extrabold text-2xl text-primary-blue">${data.paid} / ${maxPaid}</td>
-                            <td class="text-right font-bold text-accent-green">${paidAmount.toLocaleString('vi-VN')}₫</td>
+                            <td class="text-right font-bold text-accent-green">${paidAmount.toLocaleString('vi-VN')}₫}</td>
                             <td class="text-right min-w-[120px]">
-                                ${data.remaining > 0 ?
-                                    `<span class="bg-secondary-orange/10 text-secondary-orange font-bold px-3 py-1 rounded-full">${data.remaining.toLocaleString('vi-VN')}₫</span>` : 
-                                    '<span class="text-gray-400 italic">0₫</span>'}
+                                ${data.remaining > 0 ? `<span class="bg-secondary-orange/10 text-secondary-orange font-bold px-3 py-1 rounded-full">${data.remaining.toLocaleString('vi-VN')}₫}</span>` : '<span class="text-gray-400 italic">0₫</span>'}
                             </td>
                             <td class="text-center min-w-[150px]">
-                                <button onclick="showAdjustFeeModal('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="text-white bg-primary-blue hover:bg-blue-700 text-sm px-3 py-1 rounded-full transition mr-2"><i class="fas fa-plus-minus"></i> Điều chỉnh</button>
+                                <button onclick="showAdjustFeeModal('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.classId}')" class="text-white bg-primary-blue hover:bg-blue-700 text-sm px-3 py-1 rounded-full transition mr-2"><i class="fas fa-plus-minus"></i> Điều chỉnh</button>
                                 <button onclick="alert('Tính năng Lịch sử đang được phát triển.')" class="text-gray-600 hover:text-primary-blue text-lg"><i class="fas fa-history"></i></button>
                             </td>
                         </tr>
                     `;
-                }).join('');
-
+                }).join(''); 
                 document.getElementById('mainContent').innerHTML = `
                     <div class="card border-t-8 border-accent-green">
-                        <h2 class="text-4xl font-extrabold text-primary-blue mb-4">QUẢN LÝ HỌC PHÍ</h2>
-                        <p class="text-lg text-gray-700 mb-6 font-semibold border-b pb-3">
-                            Học phí: <span class="text-accent-green">${cost.toLocaleString('vi-VN')}₫/buổi</span>.
-                            Mỗi đợt: <span class="text-primary-blue font-bold">${CONFIG.SESSIONS_PER_COURSE} buổi</span> (Tổng: ${(cost * CONFIG.SESSIONS_PER_COURSE).toLocaleString('vi-VN')}₫).
-                        </p>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-4xl font-extrabold text-primary-blue">QUẢN LÝ HỌC PHÍ</h2>
+                            <button onclick="app.exportFees(document.getElementById('classFilterFee').value, document.getElementById('searchFeeQuery').value)" class="btn-primary !bg-secondary-orange hover:!bg-orange-700">
+                                <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                            </button>
+                        </div>
+                        <div class="mb-6 p-4 bg-green-50 rounded-xl shadow-inner border border-green-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="col-span-1">
+                                <label for="classFilterFee" class="font-bold text-sm text-accent-green block mb-1"><i class="fas fa-filter mr-2"></i> LỌC THEO LỚP:</label>
+                                <select id="classFilterFee" onchange="app.renderFees(this.value, document.getElementById('searchFeeQuery').value)" class="input-field !w-full !py-2 !px-4 bg-white font-bold">
+                                    <option value="all" ${classFilter === 'all' ? 'selected' : ''}>Tất cả các lớp</option>
+                                    ${classOptions}
+                                </select>
+                            </div>
+                            <div class="col-span-1">
+                                <label for="searchFeeQuery" class="font-bold text-sm text-accent-green block mb-1"><i class="fas fa-search mr-2"></i> TÌM KIẾM (Tên/SĐT):</label>
+                                <input type="text" id="searchFeeQuery" value="${searchQuery}" placeholder="Nhập tên hoặc SĐT PH..." class="input-field !w-full !py-2 !px-4 bg-white" oninput="app.renderFees(document.getElementById('classFilterFee').value, this.value)">
+                            </div>
+                            <div class="col-span-1 flex items-end">
+                                <span class="font-bold text-primary-blue text-lg w-full p-2 bg-green-100 rounded-lg">Tìm thấy: <span class="text-secondary-orange">${filteredStudents.length}</span> học sinh</span>
+                            </div>
+                        </div>
+
                         <div class="overflow-x-auto rounded-xl shadow-xl border border-gray-200">
                             <table class="responsive-table">
                                 <thead>
                                     <tr>
                                         <th>Học sinh</th>
-                                        <th class="text-center">Buổi Đã Đóng (10)</th>
+                                        <th>Loại Lớp</th>
+                                        <th class="text-right">Học Phí/Buổi</th>
+                                        <th class="text-center">Buổi Đã Đóng (${maxPaid})</th>
                                         <th class="text-right">Tổng Tiền Đã Thu</th>
                                         <th class="text-right">Tiền Dư</th>
                                         <th class="text-center">Hành Động</th>
                                     </tr>
                                 </thead>
-                                <tbody>${rows || '<tr><td colspan="5" class="text-center py-8 text-gray-500">Chưa có học sinh nào để quản lý học phí.</td></tr>'}</tbody>
+                                <tbody>${rows || '<tr><td colspan="7" class="text-center py-8 text-gray-500">Không tìm thấy học sinh nào.</td></tr>'}</tbody>
                             </table>
                         </div>
                     </div>
                 `;
             },
+
+            // ─── CHỨC NĂNG EXPORT EXCEL MỚI ───
+            exportStudentList(classFilter) {
+                let students = db.get('students').sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+                let filteredStudents = students;
+                if (classFilter !== 'all') {
+                    filteredStudents = students.filter(s => s.classId === classFilter);
+                }
+
+                const exportData = filteredStudents.map((s, i) => ({
+                    'STT': i + 1,
+                    'Họ Tên': s.name,
+                    'SĐT PH': s.phone || 'Chưa có',
+                    'Lớp': s.classId === '1-1' ? 'Kèm 1-1' : s.classId
+                }));
+                const filename = classFilter === 'all' ? 'Danh_Sach_Hoc_Sinh_Tat_Ca' : `Danh_Sach_Hoc_Sinh_Lop_${classFilter}`;
+                exportToExcel(exportData, filename);
+            },
+
+            exportAttendance(selectedDate, classFilter) {
+                const students = db.get('students').sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+                const fees = db.get('fees'); 
+                const maxPaid = CONFIG.SESSIONS_PER_COURSE;
+                
+                let filteredStudents = students;
+                if (classFilter !== 'all') {
+                    filteredStudents = students.filter(s => s.classId === classFilter);
+                }
+                
+                const att = db.get('attendance')[selectedDate] || {};
+
+                const exportData = filteredStudents.map((s, i) => {
+                    const status = att[s.id]?.status || 'absent';
+                    const note = att[s.id]?.note || '';
+                    const feeData = fees[s.id]?.current || { paid: 0, remaining: 0 };
+                    
+                    let feeStatusText;
+                    if (feeData.paid <= 0) {
+                        feeStatusText = 'Chưa đóng buổi nào';
+                    } else if (feeData.paid < maxPaid) {
+                         feeStatusText = `Thiếu ${maxPaid - feeData.paid} buổi`;
+                    } else {
+                        feeStatusText = 'Đủ 10 buổi';
+                    }
+                    
+                    return {
+                        'STT': i + 1,
+                        'Họ Tên': s.name,
+                        'Lớp': s.classId === '1-1' ? 'Kèm 1-1' : s.classId,
+                        'Buổi Đã Đóng': feeData.paid,
+                        'Trạng Thái Học Phí': feeStatusText,
+                        'Tình Trạng Điểm Danh': status === 'present' ? 'Có mặt' : 'Vắng',
+                        'Ghi chú': note
+                    };
+                });
+                
+                const datePart = app.getFormattedDate(selectedDate).replace(/\//g, '_');
+                const classPart = classFilter === 'all' ? 'Tat_Ca' : classFilter;
+                const filename = `Diem_Danh_${datePart}_Lop_${classPart}`;
+                exportToExcel(exportData, filename);
+            },
+
+            exportFees(classFilter, searchQuery) {
+                const students = db.get('students').sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+                const fees = db.get('fees');
+                const maxPaid = CONFIG.SESSIONS_PER_COURSE;
+
+                let filteredStudents = students;
+                if (classFilter !== 'all') {
+                    filteredStudents = filteredStudents.filter(s => s.classId === classFilter);
+                }
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    filteredStudents = filteredStudents.filter(s => 
+                        s.name.toLowerCase().includes(query) ||
+                        s.phone.includes(query)
+                    );
+                }
+
+                const exportData = filteredStudents.map(s => {
+                    const data = fees[s.id]?.current || { paid: 0, remaining: 0 };
+                    const feePerSession = getFeeByClass(s.classId);
+                    const paidAmount = data.paid * feePerSession;
+
+                    return {
+                        'Họ Tên': s.name,
+                        'Loại Lớp': s.classId === '1-1' ? 'Kèm 1-1' : s.classId,
+                        'Học Phí/Buổi (VND)': feePerSession,
+                        'Buổi Đã Đóng': data.paid,
+                        'Tổng Tiền Đã Thu (VND)': paidAmount,
+                        'Tiền Dư (VND)': data.remaining,
+                        'Tình trạng': data.paid >= maxPaid ? 'Đủ buổi' : (data.paid === 0 ? 'Chưa đóng' : 'Thiếu buổi')
+                    };
+                });
+                
+                const classPart = classFilter === 'all' ? 'Tat_Ca' : classFilter;
+                const filename = `Hoc_Phi_Tong_Quan_Lop_${classPart}`;
+                exportToExcel(exportData, filename);
+            },
             
-            // ─── BÁO CÁO THỐNG KÊ ───
+            exportReports() {
+                const students = db.get('students');
+                const attendance = db.get('attendance');
+                
+                // Recalculate the report data (same logic as in renderReports)
+                const sessionsByClass = {}; 
+                CLASSES.forEach(c => sessionsByClass[c] = { count: 0, revenue: 0 });
+                
+                for (const day in attendance) { 
+                    const dailyAtt = attendance[day];
+                    for (const studentId in dailyAtt) { 
+                        if (dailyAtt[studentId].status === 'present') {
+                            const student = students.find(s => s.id === studentId);
+                            if (student) { 
+                                const fee = getFeeByClass(student.classId); 
+                                const classId = student.classId; 
+                                sessionsByClass[classId] = sessionsByClass[classId] || { count: 0, revenue: 0 }; 
+                                sessionsByClass[classId].count++; 
+                                sessionsByClass[classId].revenue += fee;
+                            } 
+                        } 
+                    } 
+                }
+
+                // Prepare export data
+                const exportData = Object.entries(sessionsByClass)
+                    .sort(([classA], [classB]) => classA.localeCompare(classB))
+                    .map(([classId, data]) => ({
+                        'Loại Lớp': classId === '1-1' ? 'KÈM 1-1' : `Lớp ${classId}`,
+                        'Tổng Số Buổi Điểm Danh': data.count,
+                        'Doanh Thu Tạm Tính (VND)': data.revenue
+                    }));
+                    
+                exportToExcel(exportData, 'Bao_Cao_Thong_Ke_Theo_Lop');
+            },
+            
+            // ─── BÁO CÁO THỐNG KÊ ─── 
             renderReports() {
                 const students = db.get('students');
                 const attendance = db.get('attendance');
-                const cost = CONFIG.FEE_PER_SESSION;
-                
+
                 // 1. Calculate Total Sessions & Revenue
                 let totalPresentSessions = 0;
+                let totalRevenueBasedOnAttendance = 0;
+
                 // Group sessions by class ID
                 const sessionsByClass = {};
-                CLASSES.forEach(c => sessionsByClass[c] = 0); // Initialize all classes 
+                CLASSES.forEach(c => sessionsByClass[c] = { count: 0, revenue: 0 });
 
+                // Initialize all classes
                 for (const day in attendance) {
                     const dailyAtt = attendance[day];
                     for (const studentId in dailyAtt) {
                         if (dailyAtt[studentId].status === 'present') {
                             totalPresentSessions++;
-                            // Find student to get classId
+                            // Find student to get classId and fee
                             const student = students.find(s => s.id === studentId);
                             if (student) {
-                                sessionsByClass[student.classId] = (sessionsByClass[student.classId] || 0) + 1;
+                                const fee = getFeeByClass(student.classId);
+                                const classId = student.classId;
+                                sessionsByClass[classId] = sessionsByClass[classId] || { count: 0, revenue: 0 };
+                                sessionsByClass[classId].count++;
+                                sessionsByClass[classId].revenue += fee;
+                                totalRevenueBasedOnAttendance += fee;
                             }
                         }
                     }
                 }
-                
-                const totalRevenueBasedOnAttendance = totalPresentSessions * cost;
                 // 2. Prepare Class Report Table
                 const classReportRows = Object.entries(sessionsByClass)
                     .sort(([classA], [classB]) => classA.localeCompare(classB))
-                    .map(([classId, count]) => `
+                    .map(([classId, data]) => `
                         <tr>
-                            <td class="font-bold text-primary-blue">${classId}</td>
-                            <td class="text-center font-extrabold text-2xl text-secondary-orange">${count}</td>
-                            <td class="text-right font-bold text-accent-green">${(count * cost).toLocaleString('vi-VN')}₫}</td>
+                            <td class="font-bold ${classId === '1-1' ? 'text-one-to-one-fee' : 'text-primary-blue'}">${classId === '1-1' ? 'KÈM 1-1' : `Lớp ${classId}`}</td>
+                            <td class="text-center font-extrabold text-2xl text-secondary-orange">${data.count}</td>
+                            <td class="text-right font-bold text-accent-green">${data.revenue.toLocaleString('vi-VN')}₫}</td>
                         </tr>
                     `).join('');
                 document.getElementById('mainContent').innerHTML = `
                     <div class="card border-t-8 border-gray-400">
-                        <h2 class="text-4xl font-extrabold text-primary-blue mb-4">BÁO CÁO THỐNG KÊ</h2>
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-4xl font-extrabold text-primary-blue">BÁO CÁO THỐNG KÊ</h2>
+                            <button onclick="app.exportReports()" class="btn-primary !bg-primary-blue hover:!bg-blue-700">
+                                <i class="fas fa-file-excel mr-2"></i> Xuất Excel
+                            </button>
+                        </div>
                         <p class="text-lg text-gray-700 mb-8 font-semibold">Phân tích tiến trình dựa trên số buổi học đã diễn ra và doanh thu tương ứng.</p>
 
-                        <h3 class="text-2xl font-extrabold text-primary-blue mb-4 border-b pb-2">TỔNG QUAN TIẾN TRÌNH</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                            <div class="card p-6 bg-blue-50 border-blue-200">
-                                <p class="text-sm uppercase font-semibold text-primary-blue">Tổng Buổi Học Đã Điểm Danh (Có mặt)</p>
-                                <p class="text-5xl font-extrabold mt-1 text-primary-blue">${totalPresentSessions}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                            <div class="card p-5 bg-blue-50 border-primary-blue/50 border shadow-md">
+                                <p class="text-sm uppercase font-semibold text-primary-blue">Tổng Buổi Điểm Danh (Đã học)</p>
+                                <p class="text-4xl font-extrabold text-primary-blue mt-1">${totalPresentSessions}</p>
                             </div>
-                            <div class="card p-6 bg-green-50 border-green-200">
-                                <p class="text-sm uppercase font-semibold text-accent-green">Doanh Thu Tạm Tính Theo Buổi Học</p>
-                                <p class="text-3xl font-extrabold mt-1 text-accent-green">${totalRevenueBasedOnAttendance.toLocaleString('vi-VN')}₫</p>
-                                <p class="text-xs text-gray-500 mt-2">Tính theo ${cost.toLocaleString('vi-VN')}₫/buổi.</p>
+                            <div class="card p-5 bg-green-50 border-accent-green/50 border shadow-md md:col-span-2">
+                                <p class="text-sm uppercase font-semibold text-accent-green">Tổng Doanh Thu Tạm Tính (Dựa trên số buổi)</p>
+                                <p class="text-4xl font-extrabold text-accent-green mt-1">${totalRevenueBasedOnAttendance.toLocaleString('vi-VN')}₫</p>
                             </div>
                         </div>
 
-                        <h3 class="text-2xl font-extrabold text-primary-blue mb-4 border-b pb-2">SỐ BUỔI THEO LỚP</h3>
+                        <h3 class="text-2xl font-extrabold text-primary-blue mb-6 border-b pb-2">BÁO CÁO CHI TIẾT THEO LỚP</h3>
                         <div class="overflow-x-auto rounded-xl shadow-xl border border-gray-200">
                             <table class="responsive-table">
                                 <thead>
                                     <tr>
-                                        <th>Lớp</th>
-                                        <th class="text-center">Tổng Buổi Học</th>
+                                        <th>Loại Lớp</th>
+                                        <th class="text-center">Số Buổi Đã Học</th>
                                         <th class="text-right">Doanh Thu Tạm Tính</th>
                                     </tr>
                                 </thead>
@@ -605,7 +811,6 @@
                     </div>
                 `;
             },
-            
             // ----------------------------------------
             // 4. HELPER LOGIC
             // ----------------------------------------
@@ -614,31 +819,90 @@
                 const parts = dateString.split('-'); // YYYY-MM-DD
                 return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
             },
-
             calculateDashboardStats() {
+                const students = db.get('students');
                 const fees = db.get('fees');
                 let totalRevenue = 0;
-                Object.values(fees).forEach(sFee => {
-                    if (sFee.current) totalRevenue += sFee.current.paid * CONFIG.FEE_PER_SESSION;
+                Object.keys(fees).forEach(studentId => {
+                    const sFee = fees[studentId];
+                    if (sFee.current) {
+                        const student = students.find(s => s.id === studentId);
+                        if (student) {
+                            const feePerSession = getFeeByClass(student.classId);
+                            totalRevenue += sFee.current.paid * feePerSession;
+                        } else {
+                            // If student data is missing, fallback to default fee for revenue calculation (less accurate but prevents break)
+                            totalRevenue += sFee.current.paid * CONFIG.FEE_PER_SESSION;
+                        }
+                    }
                     totalRevenue += sFee.current?.remaining || 0; // Add remaining money if any
                 });
                 const today = new Date().toISOString().split('T')[0];
                 const att = db.get('attendance')[today] || {};
                 const todayAttendance = Object.values(att).filter(x => x && x.status === 'present').length;
-
                 return { totalRevenue, todayAttendance };
             }
         };
-
         // ----------------------------------------
         // 5. GLOBAL FUNCTIONS
         // ----------------------------------------
+
+        /**
+         * Chuyển đổi mảng object sang CSV và trigger download.
+         * @param {Array<Object>} data - Dữ liệu cần export (mảng object).
+         * @param {string} filename - Tên file (không cần .csv).
+         */
+        function exportToExcel(data, filename) {
+            if (data.length === 0) {
+                alert("Không có dữ liệu để xuất!");
+                return;
+            }
+
+            // Lấy headers (keys của object đầu tiên)
+            const headers = Object.keys(data[0]);
+
+            // Format các giá trị để tránh lỗi encoding và dấu phẩy trong nội dung
+            const escapeValue = (value) => {
+                if (typeof value === 'number') return value;
+                if (value === null || value === undefined) return '';
+                let str = String(value).replace(/"/g, '""'); // Escape double quotes
+                if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+                    str = `"${str}"`; // Enclose in double quotes if contains comma, newline, or double quote
+                }
+                return str;
+            };
+
+            // Tạo hàng header
+            let csv = headers.map(h => escapeValue(h)).join(',') + '\n';
+
+            // Thêm các hàng dữ liệu
+            data.forEach(row => {
+                const rowData = headers.map(header => escapeValue(row[header]));
+                csv += rowData.join(',') + '\n';
+            });
+
+            // Tạo Blob và trigger download (UTF-8 with BOM for Excel compatibility)
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `${filename}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("Trình duyệt của bạn không hỗ trợ tải file.");
+            }
+        }
 
         function handleLogin() {
             const u = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
             if (!auth.login(u, p)) {
-                 document.getElementById('modalContainer').innerHTML = `
+                document.getElementById('modalContainer').innerHTML = `
                     <div class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center z-[1001]" onclick="this.remove()">
                         <div class="bg-white p-8 rounded-xl text-center shadow-2xl" onclick="event.stopPropagation()">
                             <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-3"></i>
@@ -646,47 +910,37 @@
                             <p class="text-gray-600 mt-2">Sai Tài khoản hoặc Mật khẩu.</p>
                             <button onclick="document.getElementById('modalContainer').innerHTML = ''" class="mt-4 bg-primary-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700">Đóng</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
-        }
-
+        } 
         function addStudent() {
             const name = document.getElementById('newName').value.trim();
             const phone = document.getElementById('newPhone').value.trim();
             const classId = document.getElementById('newClass').value;
-            if (!name) return alert('Vui lòng nhập tên học sinh.');
-            const students = db.get('students');
-            
-            // Generate simple unique ID
-            const newId = `s_${Date.now()}`;
-            students.push({ id: newId, name, phone, classId });
+            if (!name) return alert('Tên không được để trống!');
+
+            let students = db.get('students');
+            students.push({ id: `s_${Date.now()}`, name, phone, classId });
             db.set('students', students);
             
             // Clear inputs
             document.getElementById('newName').value = '';
             document.getElementById('newPhone').value = '';
-
-            app.renderStudentList();
+            
+            app.renderStudentList(document.getElementById('classFilter').value);
         }
-
         function deleteStudent(id) {
-            if (confirm('Xóa học sinh này? Hành động này không thể hoàn tác.')) {
-                let students = db.get('students');
-                students = students.filter(x => x.id !== id);
-                db.set('students', students);
-                
-                // Also clean up fee and attendance data
-                const fees = db.get('fees');
-                delete fees[id];
-                db.set('fees', fees);
-                
-                app.renderStudentList();
-            }
+            if (!confirm('Bạn có chắc chắn muốn xóa học sinh này không?')) return;
+            let students = db.get('students').filter(s => s.id !== id);
+            db.set('students', students);
+            
+            // Optionally remove fee/attendance records later if needed
+            
+            // Re-render the list
+            app.renderStudentList(document.getElementById('classFilter').value);
         }
-        
         function showEditStudentModal(id, name, phone, classId) {
-            const classOptions = CLASSES.map(c => `<option value="${c}" ${c === classId ? 'selected' : ''}>Lớp ${c}</option>`).join('');
+            let classOptions = CLASSES.map(c => `<option value="${c}" ${c === classId ? 'selected' : ''}>${c === '1-1' ? 'Kèm 1-1' : `Lớp ${c}`}</option>`).join('');
             document.getElementById('modalContainer').innerHTML = `
                 <div class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center z-[1001]" onclick="this.remove()">
                     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-lg transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
@@ -707,38 +961,28 @@
                             <button onclick="saveStudentEdit('${id}')" class="w-full btn-primary !py-3">Lưu Thay Đổi</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-        
         function saveStudentEdit(id) {
             const name = document.getElementById('editName').value.trim();
             const phone = document.getElementById('editPhone').value.trim();
             const classId = document.getElementById('editClassId').value;
-            
             if (!name) return alert('Tên không được để trống!');
-            
             let students = db.get('students');
             const userIndex = students.findIndex(u => u.id === id);
-            
             if (userIndex !== -1) {
                 students[userIndex].name = name;
                 students[userIndex].phone = phone;
                 students[userIndex].classId = classId;
                 db.set('students', students);
-                
-                document.getElementById('modalContainer').innerHTML = '';
-                // Close modal
+                document.getElementById('modalContainer').innerHTML = ''; // Close modal
                 app.renderStudentList();
             } else {
                 alert('Không tìm thấy học sinh!');
             }
-        }
-
+        } 
         /**
          * Chức năng tích hợp Điểm danh và Học phí.
-         * Khi chuyển sang 'present', tự động gọi adjustFee để trừ 1 buổi (-1).
-         * Khi chuyển từ 'present' sang 'absent', tự động gọi adjustFee để hoàn 1 buổi (+1).
          */
         function toggleAttend(id, status, date) {
             const day = date; // Sử dụng ngày được chọn
@@ -748,35 +992,39 @@
             // 1. Lấy trạng thái cũ và ghi chú cũ
             const oldStatus = att[day][id]?.status || 'absent';
             const note = att[day][id]?.note || '';
+            const students = db.get('students');
+            const student = students.find(s => s.id === id);
             
-            // 2. Ghi nhận điểm danh mới
-            att[day][id] = { status: status, note: note };
-            db.set('attendance', att);
-
-            // 3. Xử lý logic học phí TÍCH HỢP
-            if (oldStatus !== status) {
-                const reason = status === 'present' ? 
-                    `Tự động trừ khi điểm danh Có mặt ngày ${app.getFormattedDate(day)}` : 
-                    `Tự động hoàn lại khi chuyển sang Vắng ngày ${app.getFormattedDate(day)}`;
-
-                if (status === 'present') {
-                    // Mới chuyển sang Có mặt: trừ 1 buổi học phí đã đóng
-                    adjustFee(id, -1, reason, day); // Truyền ngày
-                } else if (oldStatus === 'present' && status === 'absent') {
-                    // Mới chuyển sang Vắng: hoàn lại 1 buổi học phí đã đóng (vì buổi này không tính)
-                    adjustFee(id, 1, reason, day); // Truyền ngày
-                }
+            if (!student) {
+                console.error("Không tìm thấy thông tin học sinh!");
+                return;
             }
-            
-            const classFilterAtt = document.getElementById('classFilterAtt')?.value || 'all';
-            app.renderAttendance(day, classFilterAtt); // Re-render với ngày và bộ lọc hiện tại
-        }
+            const feePerSession = getFeeByClass(student.classId);
 
+            if (status === 'present') { // Đánh dấu CÓ MẶT
+                if (oldStatus === 'absent') { // Nếu trước đó là VẮNG
+                    // Trừ 1 buổi đã đóng
+                    adjustFee(id, -1, `Tự động: Điểm danh ngày ${app.getFormattedDate(day)}`, day, feePerSession);
+                }
+                att[day][id] = { status: 'present', note };
+            } else { // Đánh dấu VẮNG (absent)
+                if (oldStatus === 'present') { // Nếu trước đó là CÓ MẶT
+                    // Hoàn lại 1 buổi đã đóng
+                    adjustFee(id, 1, `Tự động: Xóa điểm danh ngày ${app.getFormattedDate(day)}`, day, feePerSession);
+                }
+                att[day][id] = { status: 'absent', note };
+            }
+
+            db.set('attendance', att);
+            
+            // Re-render với ngày và bộ lọc hiện tại
+            const classFilterAtt = document.getElementById('classFilterAtt')?.value || 'all';
+            app.renderAttendance(day, classFilterAtt);
+        }
         function saveNote(id, note, date) {
             const day = date; // Sử dụng ngày được chọn
             const att = db.get('attendance');
             if (!att[day]) att[day] = {};
-            
             // If the record doesn't exist, create it with default 'absent' status
             if (!att[day][id]) att[day][id] = { status: 'absent' };
             att[day][id].note = note.trim();
@@ -785,101 +1033,122 @@
         }
 
         // Modal điều chỉnh học phí thủ công
-        function showAdjustFeeModal(studentId, studentName) {
+        function showAdjustFeeModal(studentId, studentName, classId) {
             const today = new Date().toISOString().split('T')[0];
+            const feeValue = getFeeByClass(classId); // Lấy phí theo loại lớp
+            const className = classId === '1-1' ? 'Kèm 1-1' : `Lớp ${classId}`;
             document.getElementById('modalContainer').innerHTML = `
                 <div class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 flex items-center justify-center z-[1001]" onclick="this.remove()">
                     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
                         <h3 class="text-2xl font-bold text-primary-blue mb-4"><i class="fas fa-money-bill-transfer mr-2"></i> Điều Chỉnh Học Phí</h3>
-                        <p class="text-lg font-semibold text-secondary-orange mb-6 border-b pb-2">HS: ${studentName}</p>
-
+                        <p class="text-lg font-semibold text-secondary-orange mb-3 border-b pb-2">HS: ${studentName}</p>
+                        <p class="text-md font-semibold text-gray-700 mb-6">Lớp: <span class="font-bold ${classId === '1-1' ? 'text-one-to-one-fee' : 'text-primary-blue'}">${className}</span> (${feeValue.toLocaleString('vi-VN')}₫/buổi)</p>
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700">Ngày Đóng/Điều Chỉnh</label>
                                 <input type="date" id="feeDate" class="input-field" value="${today}">
                             </div>
-
-                            <div class="flex items-center space-x-3">
-                                <button onclick="adjustFee('${studentId}', 1, 'Thêm thủ công 1 buổi', document.getElementById('feeDate').value)" class="flex-1 btn-primary !bg-accent-green hover:!bg-green-700 !py-3 text-lg"><i class="fas fa-plus"></i> Thêm 1 buổi</button>
-                                <button onclick="adjustFee('${studentId}', -1, 'Giảm thủ công 1 buổi', document.getElementById('feeDate').value)" class="flex-1 btn-primary !bg-red-500 hover:!bg-red-700 !py-3 text-lg"><i class="fas fa-minus"></i> Giảm 1 buổi</button>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Hình thức Điều chỉnh</label>
+                                <select id="feeType" class="input-field">
+                                    <option value="paid">Đóng thêm (Cộng buổi)</option>
+                                    <option value="remaining_plus">Nạp Tiền Dư (Cộng tiền)</option>
+                                    <option value="remaining_minus">Rút Tiền Dư (Trừ tiền)</option>
+                                    <option value="minus_session">Trừ buổi thủ công (Giảm buổi)</option>
+                                </select>
                             </div>
-                            <p class="text-xs text-gray-500 italic mt-2 text-center">(${CONFIG.FEE_PER_SESSION.toLocaleString('vi-VN')}₫/buổi)</p>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Giá trị (Buổi hoặc Tiền VND)</label>
+                                <input type="number" id="feeValueInput" class="input-field" placeholder="Nhập số buổi (1) hoặc số tiền (VND)">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Lý do</label>
+                                <input type="text" id="feeReason" class="input-field" placeholder="Ví dụ: Đóng 10 buổi, Hoàn lại tiền...">
+                            </div>
+                            <button onclick="handleAdjustFee('${studentId}', ${feeValue})" class="w-full btn-secondary !py-3">Xác Nhận Điều Chỉnh</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
+        }
+
+        function handleAdjustFee(studentId, feeValue) {
+            const type = document.getElementById('feeType').value;
+            const valueInput = document.getElementById('feeValueInput').value.trim();
+            const date = document.getElementById('feeDate').value;
+            const reason = document.getElementById('feeReason').value.trim() || type;
+            const students = db.get('students');
+            const student = students.find(s => s.id === studentId);
+            
+            if (!valueInput || isNaN(Number(valueInput)) || Number(valueInput) <= 0) return alert('Vui lòng nhập giá trị hợp lệ.');
+
+            let change = 0;
+            let moneyChange = 0;
+            let finalFeeValue = feeValue; // Mức phí/buổi
+
+            if (type === 'paid') {
+                change = Math.floor(Number(valueInput)); // Số buổi đóng thêm
+                if (change < 1) return alert('Số buổi đóng thêm phải là số nguyên dương.');
+                adjustFee(studentId, change, reason, date, finalFeeValue);
+            } else if (type === 'minus_session') {
+                change = -Math.floor(Number(valueInput)); // Số buổi bị trừ
+                if (change > -1) return alert('Số buổi bị trừ phải là số nguyên âm.');
+                adjustFee(studentId, change, reason, date, finalFeeValue);
+            } else if (type === 'remaining_plus') {
+                moneyChange = Number(valueInput); // Tiền nạp thêm
+                adjustMoney(studentId, moneyChange, reason, date);
+            } else if (type === 'remaining_minus') {
+                moneyChange = -Number(valueInput); // Tiền rút ra
+                adjustMoney(studentId, moneyChange, reason, date);
+            }
         }
 
         /**
-         * Điều chỉnh số buổi học phí đã đóng.
-         * Phân biệt: 
-         * - 'Tự động' (từ điểm danh): chỉ tác động đến current.paid, không quan tâm đến remaining.
-         * - 'Thủ công' (từ nút +/-): tác động đến cả current.paid và current.remaining.
+         * Điều chỉnh số buổi đã đóng (chỉ dành cho paid)
          * @param {string} studentId
-         * @param {number} change - 1 (thêm 1 buổi), -1 (trừ 1 buổi)
-         * @param {string} reason - Lý do thay đổi
-         * @param {string} date - Ngày diễn ra sự kiện (YYYY-MM-DD)
+         * @param {number} change - Số buổi thay đổi (+/-)
+         * @param {string} reason - Lý do
+         * @param {string} date - Ngày giao dịch
+         * @param {number} feeValue - Mức phí/buổi tại thời điểm giao dịch
          */
-        function adjustFee(studentId, change, reason, date) {
+        function adjustFee(studentId, change, reason, date, feeValue) {
             const fees = db.get('fees');
-            // Ensure fee object exists and has current/history structure
             if (!fees[studentId]) fees[studentId] = { current: { paid: 0, remaining: 0 }, history: [] };
             if (!fees[studentId].current) fees[studentId].current = { paid: 0, remaining: 0 };
             if (!fees[studentId].history) fees[studentId].history = [];
 
             let current = fees[studentId].current;
             let paidBefore = current.paid;
-            const day = date; // Sử dụng ngày truyền vào
-            
+            const day = date || new Date().toISOString().split('T')[0];
             const maxPaid = CONFIG.SESSIONS_PER_COURSE;
-            const feeValue = CONFIG.FEE_PER_SESSION;
+            const fee = feeValue || CONFIG.FEE_PER_SESSION; // Use provided fee or default
             let logChange = 0; // Thay đổi thực tế để log
 
-            if (reason.includes('Tự động')) {
-                // Logic TỰ ĐỘNG khi điểm danh (chỉ trừ/hoàn lại buổi học)
-                if (change < 0 && current.paid > 0) {
-                    // Trừ buổi học (khi có mặt)
-                    current.paid--;
-                    logChange = -1;
-                } else if (change > 0 && current.paid < maxPaid) {
-                    // Hoàn lại buổi học (khi chuyển từ có mặt -> vắng), chỉ hoàn tối đa bằng maxPaid
-                    current.paid++;
-                    logChange = 1;
-                } else {
-                    // Không có buổi học để trừ/hoàn lại
-                    console.warn(`Học sinh ${studentId} không có buổi đã đóng để trừ khi điểm danh.`);
-                    if (change < 0) alert('Không đủ buổi đã đóng để trừ cho buổi học này!');
-                    // Không log nếu không có thay đổi thực tế
-                }
-
-            } else {
-                // Logic THỦ CÔNG (khi nhấn nút +/-)
-                if (change === 1) {
-                    // Thêm buổi: ưu tiên tiền dư, sau đó là tăng buổi đã đóng
-                    logChange = 1;
-                    if (current.remaining >= feeValue && current.paid < maxPaid) {
-                        current.remaining -= feeValue;
-                        current.paid++;
-                    } else if (current.paid < maxPaid) {
-                        current.paid++;
-                    } else { // paid >= maxPaid
-                         current.remaining += feeValue;
-                         alert(`Đã đủ ${maxPaid} buổi. Buổi này được tính vào tiền dư: +${feeValue.toLocaleString('vi-VN')}₫`);
-                    }
-                } else if (change === -1) {
-                    // Giảm buổi: giảm số buổi đã đóng, hoặc giảm tiền dư nếu paid = 0
+            if (reason.includes('Tự động')) { // Logic TỰ ĐỘNG khi điểm danh (chỉ trừ/hoàn lại buổi học)
+                if (change < 0) { // Trừ buổi học (khi có mặt)
                     if (current.paid > 0) {
                         current.paid--;
                         logChange = -1;
-                    } else if (current.remaining >= feeValue) {
-                         current.remaining -= feeValue;
-                         logChange = -1;
-                         alert(`Số buổi đã đóng = 0. Đã giảm tiền dư: -${feeValue.toLocaleString('vi-VN')}₫`);
+                    } else if (current.remaining >= fee) { // Trừ vào tiền dư
+                        current.remaining -= fee;
+                        logChange = -1; // Vẫn tính là trừ 1 buổi
                     } else {
-                        alert('Không thể giảm thêm (Số buổi = 0 và Tiền dư < 80k).');
-                        return;
+                        console.warn('Không đủ buổi đã đóng hoặc tiền dư để trừ tự động.');
+                        return; 
                     }
+                } else if (change > 0 && current.paid < maxPaid) { // Hoàn lại buổi học (khi chuyển từ có mặt -> vắng)
+                    current.paid++;
+                    logChange = 1;
+                } else {
+                    // Không log nếu không có thay đổi thực tế hoặc không thể hoàn
+                    if (change > 0) console.warn('Số buổi đã đóng đạt tối đa. Không thể hoàn lại.');
+                    return; 
                 }
+            } else { // Logic THỦ CÔNG (thêm/bớt buổi học)
+                let newPaid = current.paid + change;
+                if (newPaid < 0) return alert('Không thể trừ buổi vì số buổi đã đóng không đủ.');
+
+                current.paid = newPaid;
+                logChange = change;
 
                 // Đóng modal sau khi điều chỉnh thủ công
                 document.getElementById('modalContainer').innerHTML = '';
@@ -888,19 +1157,66 @@
             // Ghi log vào lịch sử nếu có sự thay đổi thực tế
             if (logChange !== 0) {
                 fees[studentId].history.push({
-                    date: day, // Ghi ngày cụ thể
-                    change: logChange, // Ghi nhận sự thay đổi thực tế (1 hoặc -1)
+                    date: day, 
+                    change: logChange, 
+                    feeValue: fee, // Ghi mức phí tại thời điểm giao dịch
                     paidBefore: paidBefore,
                     paidAfter: current.paid,
                     remainingAfter: current.remaining,
-                    reason: reason // Sử dụng reason được truyền vào
+                    reason: reason 
                 });
                 db.set('fees', fees);
             }
-
-            app.renderFees();
+            
+            // Lấy filter hiện tại để re-render
+            const classFilterFee = document.getElementById('classFilterFee')?.value || 'all';
+            const searchFeeQuery = document.getElementById('searchFeeQuery')?.value || '';
+            app.renderFees(classFilterFee, searchFeeQuery); // Re-render với filters
         }
 
+        /**
+         * Điều chỉnh tiền dư (chỉ dành cho remaining)
+         * @param {string} studentId
+         * @param {number} moneyChange - Số tiền thay đổi (+/- VND)
+         * @param {string} reason - Lý do
+         * @param {string} date - Ngày giao dịch
+         */
+        function adjustMoney(studentId, moneyChange, reason, date) {
+            const fees = db.get('fees');
+            if (!fees[studentId]) fees[studentId] = { current: { paid: 0, remaining: 0 }, history: [] };
+            if (!fees[studentId].current) fees[studentId].current = { paid: 0, remaining: 0 };
+            if (!fees[studentId].history) fees[studentId].history = [];
+
+            let current = fees[studentId].current;
+            let paidBefore = current.paid;
+            const day = date || new Date().toISOString().split('T')[0];
+            
+            if (moneyChange < 0 && current.remaining + moneyChange < 0) {
+                alert('Không thể rút/trừ tiền: Số tiền dư không đủ.');
+                return;
+            }
+
+            current.remaining += moneyChange;
+            
+            fees[studentId].history.push({
+                date: day, 
+                change: moneyChange, 
+                feeValue: 0, // Không áp dụng phí/buổi cho giao dịch tiền mặt
+                paidBefore: paidBefore,
+                paidAfter: current.paid,
+                remainingAfter: current.remaining,
+                reason: reason 
+            });
+            db.set('fees', fees);
+            
+            // Đóng modal sau khi điều chỉnh thủ công
+            document.getElementById('modalContainer').innerHTML = '';
+
+            // Lấy filter hiện tại để re-render
+            const classFilterFee = document.getElementById('classFilterFee')?.value || 'all';
+            const searchFeeQuery = document.getElementById('searchFeeQuery')?.value || '';
+            app.renderFees(classFilterFee, searchFeeQuery); // Re-render với filters
+        }
 
         // Khởi động
         app.init();
