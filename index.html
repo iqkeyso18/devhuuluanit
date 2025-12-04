@@ -8,7 +8,6 @@
     <style>
         /* Sử dụng font Inter hiện đại */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9; /* Nền trắng xanh nhạt hiện đại */
@@ -83,7 +82,6 @@
             students: 'huyenMathCenter_students',
             attendance: 'huyenMathCenter_attendance'
         };
-
         // --- BIẾN STATE TOÀN CỤC CỦA ỨNG DỤNG ---
         let students = [];
         let attendanceRecords = [];
@@ -103,7 +101,6 @@
                 return [];
             }
         };
-
         /** Lưu dữ liệu vào localStorage và tự động render lại UI */
         const saveData = (type, data) => {
             localStorage.setItem(STORAGE_KEYS[type], JSON.stringify(data));
@@ -147,7 +144,6 @@
             }
             document.getElementById('admin-password').value = ''; // Xóa mật khẩu
         };
-
         window.handleLogout = () => {
              showModal('Xác Nhận Đăng Xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?', () => {
                 loggedIn = false;
@@ -177,7 +173,6 @@
             if (viewId === 'tuition') renderTuitionTable();
             if (viewId === 'dashboard') renderIncomeDashboard();
         };
-
         // --- MODULE QUẢN LÝ HỌC SINH ---
         window.handleAddStudent = (event) => {
             event.preventDefault();
@@ -210,7 +205,6 @@
                 showModal('Lỗi', 'Không thể thêm học sinh. Vui lòng thử lại.');
             }
         };
-
         window.handleEditStudent = (id, currentName, currentClass) => {
             // Mở modal chỉnh sửa
             document.getElementById('edit-student-id').value = id;
@@ -244,7 +238,6 @@
                 showModal('Lỗi', 'Không thể cập nhật học sinh. Vui lòng thử lại.');
             }
         };
-
         window.handleDeleteStudent = (id, name) => {
             showModal('Xác Nhận Xóa', `Bạn có chắc chắn muốn xóa học sinh ${name}? Hành động này không thể hoàn tác và sẽ xóa tất cả bản ghi điểm danh liên quan.`, () => {
                 try {
@@ -262,7 +255,6 @@
                 }
             }, true); // Cờ xác nhận nguy hiểm
         };
-
         const renderStudentList = () => {
             const container = document.getElementById('student-list-container');
             const filterClass = document.getElementById('student-filter-class').value;
@@ -277,14 +269,12 @@
             }
             // Sắp xếp theo tên
             filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-
             if (filteredStudents.length === 0) {
                 container.innerHTML = `<p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Không tìm thấy học sinh nào phù hợp với điều kiện lọc.</p>`;
                 return;
             }
             
             const monthDisplay = `${currentMonth.substring(5, 7)}/${currentMonth.substring(0, 4)}`;
-
             const rows = filteredStudents.map(s => {
                 // Lấy trạng thái học phí của tháng hiện tại
                 const currentMonthRecord = getAttendanceRecord(s.id, currentMonth);
@@ -335,7 +325,6 @@
             `;
         };
         window.renderStudentList = renderStudentList;
-
         // --- MODULE ĐIỂM DANH & HỌC PHÍ ---
         
         // Lấy bản ghi điểm danh (Attendance Record) theo studentId và monthYear
@@ -373,7 +362,8 @@
                     classId: student.classId,
                     monthYear: currentMonthYear,
                     sessions: sessions,
-                    isPaid: false // <-- Mặc định là chưa nộp
+                    isPaid: false, // <-- Mặc định là chưa nộp
+                    note: '' // THÊM TRƯỜNG NOTE MỚI
                 };
                 attendanceRecords.push(record);
             }
@@ -399,7 +389,8 @@
                     classId: student.classId,
                     monthYear: monthYear,
                     sessions: {}, // Không có buổi nào được điểm danh
-                    isPaid: true // Set thành Đã nộp
+                    isPaid: true, // Set thành Đã nộp
+                    note: '' // THÊM TRƯỜNG NOTE MỚI
                 };
                 attendanceRecords.push(record);
             } else {
@@ -412,6 +403,44 @@
             // Cần cập nhật lại các view liên quan
             if (currentView === 'students') renderStudentList();
             if (currentView === 'tuition') renderTuitionTable();
+        };
+
+        /** HÀM MỚI: Cập nhật ghi chú học phí (dùng chung cho cả Điểm Danh và Học Phí) */
+        window.handleUpdateTuitionNote = (studentId, monthYear, textareaEl) => {
+            const newNote = textareaEl.value.trim();
+            const recordId = `${studentId}-${monthYear}`;
+            let record = getAttendanceRecord(studentId, monthYear);
+
+            if (!record) {
+                // Nếu chưa có bản ghi (chưa điểm danh/chưa nộp), tạo bản ghi mới với note
+                const student = students.find(s => s.id === studentId);
+                if (!student) return;
+                
+                record = {
+                    id: recordId,
+                    studentId: studentId,
+                    classId: student.classId,
+                    monthYear: monthYear,
+                    sessions: {}, 
+                    isPaid: false, 
+                    note: newNote // Lưu ghi chú
+                };
+                // Chỉ thêm bản ghi nếu có ghi chú để tránh rác dữ liệu
+                if(newNote) attendanceRecords.push(record); 
+            } else {
+                // Cập nhật note cho bản ghi đã tồn tại
+                record.note = newNote;
+                attendanceRecords = attendanceRecords.map(r => r.id === recordId ? record : r);
+                
+                // Nếu người dùng xóa hết note, và record không có buổi điểm danh, và chưa thanh toán -> xóa luôn record để dọn dẹp
+                const hasSessions = Object.keys(record.sessions).length > 0 && Object.values(record.sessions).some(v => v === true);
+                if (newNote === '' && !hasSessions && !record.isPaid) {
+                    attendanceRecords = attendanceRecords.filter(r => r.id !== recordId);
+                }
+            }
+            
+            saveData('attendance', attendanceRecords);
+            // Không cần render lại toàn bộ, chỉ cần lưu dữ liệu
         };
 
 
@@ -429,7 +458,6 @@
                 filteredStudents = filteredStudents.filter(s => s.classId === filterClass);
             }
             filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-            
             if (filteredStudents.length === 0) {
                 container.innerHTML = `<p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Không tìm thấy học sinh nào trong lớp này.</p>`;
                 return;
@@ -439,10 +467,10 @@
             const sessionHeaders = Array.from({ length: 10 }, (_, i) => 
                 `<th class="px-3 py-3 text-center text-xs font-semibold text-indigo-700 uppercase">B ${i + 1}</th>`
             ).join('');
-            
             const rows = filteredStudents.map(s => {
                 const record = getAttendanceRecord(s.id, monthYear);
                 const sessions = record ? record.sessions : {};
+                const note = record ? record.note : ''; // LẤY GHI CHÚ
                 
                 const sessionCells = Array.from({ length: 10 }, (_, i) => {
                     const sessionNum = i + 1;
@@ -466,6 +494,13 @@
                             <span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700">${s.classId}</span>
                         </td>
                         ${sessionCells}
+                        <td class="p-2 text-sm w-48">
+                            <textarea 
+                                onblur="handleUpdateTuitionNote('${s.id}', '${monthYear}', this)"
+                                class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 custom-scrollbar resize-none h-16"
+                                placeholder="Ghi chú về buổi học/học sinh..."
+                            >${note}</textarea>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -478,6 +513,7 @@
                                 <th class="px-3 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider sticky left-0 bg-indigo-50 border-r w-40">Tên Học Sinh</th>
                                 <th class="px-3 py-3 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider w-16">Lớp</th>
                                 ${sessionHeaders}
+                                <th class="px-3 py-3 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider w-48">LƯU Ý</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">${rows}</tbody>
@@ -497,7 +533,6 @@
                 filteredStudents = filteredStudents.filter(s => s.classId === filterClass);
             }
             filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' }));
-            
             if (filteredStudents.length === 0) {
                 container.innerHTML = `<p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Không tìm thấy học sinh nào trong lớp này.</p>`;
                 return;
@@ -510,12 +545,13 @@
                 const record = getAttendanceRecord(s.id, monthYear);
                 const sessions = record ? record.sessions : {};
                 const isPaid = record ? record.isPaid : false; // LẤY TRẠNG THÁI ĐÃ NỘP
-
+                const note = record ? record.note : ''; // LẤY GHI CHÚ
+                
                 // Đếm số buổi có mặt
                 const attendedCount = Object.keys(sessions).reduce((count, key) => {
                     return sessions[key] === true ? count + 1 : count;
                 }, 0);
-                
+             
                 const tuitionRate = s.tuitionRate || CLASS_RATES[s.classId] || 0;
                 const monthlyTuition = attendedCount * tuitionRate;
                 totalRevenueMonth += monthlyTuition;
@@ -535,12 +571,10 @@
                     badgeColor = 'bg-gray-200 text-gray-600';
                 }
                 statusBadge = `<span class="inline-block px-3 py-1 text-xs font-bold rounded-full ${badgeColor}">${attendedCount}/10 Buổi</span>`;
-
                 // TẠO BADGE TRẠNG THÁI THANH TOÁN
                 const paymentStatusBadge = isPaid
                     ? `<span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-green-500 text-white shadow-md">✅ Đã Nộp</span>`
                     : `<span class="inline-block px-3 py-1 text-xs font-bold rounded-full bg-red-500 text-white shadow-md">❌ Chưa Nộp</span>`;
-                
                 // TẠO NÚT TOGGLE
                 const toggleButton = `
                     <button onclick="handleTuitionPayment('${s.id}', '${monthYear}')"
@@ -549,7 +583,6 @@
                         ${isPaid ? 'Hủy Đã Nộp' : 'Đánh Dấu Đã Nộp'}
                     </button>
                 `;
-
                 return `
                     <tr class="border-b last:border-b-0 hover:bg-indigo-50 transition duration-150">
                         <td class="p-4 text-sm font-semibold text-gray-800">${s.name}</td>
@@ -560,7 +593,15 @@
                         <td class="p-4 text-center space-y-1">
                             ${paymentStatusBadge}
                             ${toggleButton}
-                        </td> </tr>
+                        </td>
+                        <td class="p-2 text-sm">
+                            <textarea 
+                                onblur="handleUpdateTuitionNote('${s.id}', '${monthYear}', this)"
+                                class="w-full text-xs p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 custom-scrollbar resize-none h-16"
+                                placeholder="Ghi chú về học phí/thanh toán..."
+                            >${note}</textarea>
+                        </td>
+                    </tr>
                 `;
             }).join('');
 
@@ -574,20 +615,22 @@
                                 <th class="px-4 py-4 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider">Giá Buổi</th>
                                 <th class="px-4 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider">Số Buổi (10)</th>
                                 <th class="px-4 py-4 text-right text-xs font-bold text-indigo-700 uppercase tracking-wider">Tổng Học Phí Tháng</th>
-                                <th class="px-4 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider">Trạng Thái Thanh Toán</th> </tr>
+                                <th class="px-4 py-4 text-center text-xs font-bold text-indigo-700 uppercase tracking-wider">Trạng Thái Thanh Toán</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold text-indigo-700 uppercase tracking-wider w-48">LƯU Ý</th>
+                            </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">${rows}</tbody>
                         <tfoot>
                             <tr class="bg-yellow-100 font-extrabold text-yellow-800 border-t border-b border-yellow-300">
-                                <td colspan="5" class="p-3 text-right text-base">Tổng HP Cần Thu (Theo số buổi đã điểm danh):</td>
+                                <td colspan="6" class="p-3 text-right text-base">Tổng HP Cần Thu (Theo số buổi đã điểm danh):</td>
                                 <td class="p-3 text-lg text-right">${formatCurrency(totalRevenueMonth)}</td>
                             </tr>
                             <tr class="bg-green-100 font-extrabold text-green-800 border-b border-green-300">
-                                <td colspan="5" class="p-3 text-right text-base">Tổng HP ĐÃ NỘP trong Tháng ${monthYear} (Lọc):</td>
+                                <td colspan="6" class="p-3 text-right text-base">Tổng HP ĐÃ NỘP trong Tháng ${monthYear} (Lọc):</td>
                                 <td class="p-3 text-lg text-right">${formatCurrency(totalRevenuePaid)}</td>
                             </tr>
                             <tr class="bg-red-100 font-extrabold text-red-700 border-b-2 border-red-300">
-                                <td colspan="5" class="p-3 text-right text-base">Tổng HP CÒN LẠI cần thu:</td>
+                                <td colspan="6" class="p-3 text-right text-base">Tổng HP CÒN LẠI cần thu:</td>
                                 <td class="p-3 text-lg text-right">${formatCurrency(totalRevenueMonth - totalRevenuePaid)}</td>
                             </tr>
                         </tfoot>
@@ -597,12 +640,14 @@
         };
         window.renderTuitionTable = renderTuitionTable;
 
-        // --- MODULE DOANH THU TỔNG HỢP (KHÔNG THAY ĐỔI) ---
+        // --- MODULE DOANH THU TỔNG HỢP ---
         const calculateMonthlyIncome = (monthYear) => {
             let monthlyRevenue = 0;
             const studentsMap = students.reduce((acc, s) => { acc[s.id] = s; return acc; }, {});
+            
             // Lọc các bản ghi điểm danh trong tháng được chọn
             const monthRecords = attendanceRecords.filter(r => r.monthYear === monthYear);
+
             monthRecords.forEach(record => {
                 const student = studentsMap[record.studentId];
                 if (student) {
@@ -625,7 +670,6 @@
             // Tìm 3 tháng gần nhất để so sánh
             const date = new Date(monthYear + '-01');
             const months = [];
-            
             // Lùi lại 2 tháng
             const tempDate = new Date(date);
             tempDate.setMonth(tempDate.getMonth() - 2);
@@ -636,15 +680,19 @@
                 current.setMonth(current.getMonth() + i);
                 const year = current.getFullYear();
                 const month = current.getMonth() + 1; // 1-12
-                const monthStr = month < 10 ? '0' + month : month;
-                months.push(`${year}-${monthStr}`);
+                const monthStr = month < 10 ? '0' + month : month.toString();
+                const currentMonthYear = `${year}-${monthStr}`;
+                
+                months.push({
+                    month: currentMonthYear,
+                    revenue: calculateMonthlyIncome(currentMonthYear)
+                });
             }
 
-            const comparisonData = months.map(m => ({ month: m, revenue: calculateMonthlyIncome(m) }));
-            const maxRevenue = Math.max(...comparisonData.map(d => d.revenue), 1); // Đảm bảo min là 1 để tránh chia cho 0
-
-            const barChartHTML = comparisonData.map(d => {
-                const heightPercent = (d.revenue / maxRevenue) * 100;
+            // Tính toán tỷ lệ chiều cao cho biểu đồ
+            const maxRevenue = Math.max(...months.map(m => m.revenue));
+            const barChartHTML = months.map(d => {
+                const heightPercent = maxRevenue > 0 ? (d.revenue / maxRevenue) * 90 + 10 : 0; // Chiều cao tối thiểu 10%
                 const isCurrent = d.month === monthYear;
                 // Định dạng tháng: MM/YYYY
                 const displayMonth = d.month.split('-')[1] ? `${d.month.split('-')[1]}/${d.month.split('-')[0]}` : d.month;
@@ -652,8 +700,7 @@
                 return `
                     <div class="flex flex-col items-center mx-3 flex-1 min-w-[50px]">
                         <div class="relative w-full max-w-12 h-40 bg-gray-200 rounded-t-lg overflow-hidden border border-gray-300">
-                            <div class="absolute bottom-0 w-full rounded-b-lg transition-all duration-700 ease-out ${isCurrent ? 'bg-indigo-600 shadow-lg shadow-indigo-500/50' : 'bg-green-500 shadow-md shadow-green-400/50'}" 
-                                style="height: ${heightPercent}%;">
+                            <div class="absolute bottom-0 w-full rounded-b-lg transition-all duration-700 ease-out ${isCurrent ? 'bg-indigo-600 shadow-lg shadow-indigo-500/50' : 'bg-green-500 shadow-md shadow-green-400/50'}" style="height: ${heightPercent}%;">
                                 <span class="absolute top-[-25px] left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 w-max">${formatCurrency(d.revenue)}</span>
                             </div>
                         </div>
@@ -662,7 +709,6 @@
                 `;
             }).join('');
 
-
             document.getElementById('dashboard-monthly-revenue').textContent = formatCurrency(revenue);
             document.getElementById('dashboard-student-count').textContent = students.length;
             document.getElementById('monthly-comparison-chart').innerHTML = barChartHTML;
@@ -670,9 +716,9 @@
         window.renderIncomeDashboard = renderIncomeDashboard;
 
         // --- CÁC HÀM XỬ LÝ MODAL (POPUP) ---
-
         window.closeModal = () => {
             document.getElementById('custom-modal').classList.add('hidden');
+            document.getElementById('edit-modal').classList.add('hidden'); // Đảm bảo modal edit cũng đóng
         };
 
         window.showModal = (title, message, callback = null, isDanger = false) => {
@@ -685,7 +731,8 @@
             // Đặt lại style cơ bản cho nút Xác nhận
             confirmButton.className = 'px-6 py-3 text-sm font-bold rounded-xl text-white transition duration-200 transform hover:scale-[1.03] focus:outline-none focus:ring-4';
             
-            if (callback) { // Xác nhận/Danger mode
+            if (callback) {
+                // Xác nhận/Danger mode
                 confirmButton.classList.remove('hidden');
                 cancelButton.classList.remove('hidden');
                 if (isDanger) {
@@ -696,9 +743,13 @@
                     confirmButton.textContent = 'Xác Nhận';
                 }
                 // Gán lại sự kiện
-                confirmButton.onclick = () => { closeModal(); callback(); };
+                confirmButton.onclick = () => {
+                    closeModal();
+                    callback();
+                };
                 cancelButton.onclick = closeModal;
-            } else { // Chỉ hiển thị thông báo
+            } else {
+                // Chỉ hiển thị thông báo
                 confirmButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700', 'focus:ring-indigo-300');
                 confirmButton.textContent = 'Đóng';
                 confirmButton.onclick = closeModal;
@@ -711,37 +762,36 @@
         // --- KHỞI TẠO ỨNG DỤNG ---
         document.addEventListener('DOMContentLoaded', () => {
             loadInitialData();
-            
             // Điền options cho select class
-            const classSelects = document.querySelectorAll('.class-select-options');
-            const options = ['<option value="all">Tất cả các lớp</option>']
-                .concat(CLASS_OPTIONS.map(c => `<option value="${c}">${c}</option>`)).join('');
-            classSelects.forEach(select => {
-                select.innerHTML = options;
+            const classOptionsHtml = CLASS_OPTIONS.map(c => 
+                `<option value="${c}">${c}</option>`
+            ).join('');
+            
+            document.querySelectorAll('.class-select-options').forEach(select => {
+                select.innerHTML = `<option value="all">Tất Cả Các Lớp</option>` + classOptionsHtml;
             });
-            document.getElementById('new-student-class').innerHTML = CLASS_OPTIONS.map(c => `<option value="${c}">${c}</option>`).join('');
-
-            // Thiết lập tháng hiện tại
+            
+            // Đặt tháng hiện tại cho các selector
             document.getElementById('attendance-month-selector').value = currentMonth;
             document.getElementById('tuition-month-selector').value = currentMonth;
             document.getElementById('income-month-selector').value = currentMonth;
-            
-            // Xử lý sự kiện thay đổi tháng/lớp cho các view
+
+            // Gán sự kiện cho các selector
             document.getElementById('attendance-month-selector').onchange = renderAttendanceView;
             document.getElementById('attendance-filter-class').onchange = renderAttendanceView;
+
             document.getElementById('tuition-month-selector').onchange = renderTuitionTable;
             document.getElementById('tuition-filter-class').onchange = renderTuitionTable;
+
             document.getElementById('income-month-selector').onchange = renderIncomeDashboard;
 
-            // Xử lý sự kiện tìm kiếm học sinh
-            document.getElementById('student-search-name').oninput = renderStudentList;
-
-            // Mặc định hiển thị màn hình đăng nhập
-            document.getElementById('main-app').classList.add('hidden');
-            // Gán active cho dashboard khi vào app
-            document.querySelector(`button[onclick="switchView('dashboard')"]`).classList.add('active');
+            // Đặt view mặc định
+            if (loggedIn) {
+                switchView('dashboard');
+            }
         });
     </script>
+
 </head>
 <body>
     <div id="custom-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
@@ -749,15 +799,14 @@
             <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Thông báo</h3>
             <p id="modal-message" class="text-gray-600 mb-6"></p>
             <div class="flex justify-end space-x-3">
-                <button type="button" onclick="closeModal()" id="modal-cancel-btn" 
-                        class="px-6 py-3 text-sm font-bold rounded-xl text-gray-700 border border-gray-300 hover:bg-gray-100 transition duration-200">
+                <button type="button" onclick="closeModal()" id="modal-cancel-btn" class="px-6 py-3 text-sm font-bold rounded-xl text-gray-700 border border-gray-300 hover:bg-gray-100 transition duration-200">
                     Hủy
                 </button>
                 <button type="button" id="modal-confirm-btn" class="hidden"></button>
             </div>
         </div>
     </div>
-    
+
     <div id="edit-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-40 flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
             <h3 class="text-2xl font-bold text-gray-800 mb-6">Chỉnh Sửa Thông Tin Học Sinh</h3>
@@ -766,23 +815,19 @@
                 <div class="space-y-4">
                     <div>
                         <label for="edit-student-name" class="block text-sm font-medium text-gray-700 mb-1">Tên Học Sinh</label>
-                        <input type="text" id="edit-student-name" required 
-                               class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700">
+                        <input type="text" id="edit-student-name" required class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700">
                     </div>
                     <div>
                         <label for="edit-student-class" class="block text-sm font-medium text-gray-700 mb-1">Lớp Học</label>
-                        <select id="edit-student-class" required 
-                                class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700 bg-white">
+                        <select id="edit-student-class" required class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700 bg-white">
                         </select>
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeModal()" 
-                            class="px-6 py-3 text-sm font-bold rounded-xl text-gray-700 border border-gray-300 hover:bg-gray-100 transition duration-200">
+                    <button type="button" onclick="closeModal()" class="px-6 py-3 text-sm font-bold rounded-xl text-gray-700 border border-gray-300 hover:bg-gray-100 transition duration-200">
                         Hủy
                     </button>
-                    <button type="submit" 
-                            class="px-6 py-3 text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                    <button type="submit" class="px-6 py-3 text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300">
                         Lưu Thay Đổi
                     </button>
                 </div>
@@ -791,72 +836,93 @@
     </div>
 
     <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-700 to-purple-800 p-4">
-        <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-sm card-premium transform hover:scale-[1.01] transition duration-500">
-            <div class="text-center mb-8">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-600 mx-auto transform rotate-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h1 class="text-3xl font-extrabold text-gray-800 mt-4">Trung Tâm Cô Huyền</h1>
-                <p class="text-gray-500 text-lg">Hệ thống Quản lý Giáo dục</p>
-            </div>
-            <div class="space-y-6">
-                <input type="password" id="admin-password" placeholder="Mật khẩu Admin" class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-4 text-gray-700 text-center" onkeypress="if(event.keyCode == 13) handleLogin()">
-                <button onclick="handleLogin()" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/50 hover:bg-indigo-700 transition duration-300 transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-indigo-300">
-                    Đăng Nhập Quản Trị
-                </button>
-            </div>
+        <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-sm card-premium transform hover:scale-[1.03]">
+            <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-6">Đăng Nhập Quản Trị</h2>
+            <p class="text-center text-sm text-gray-500 mb-8">Mật khẩu demo: 
+                <span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">admin</span></p>
+            <form onsubmit="event.preventDefault(); handleLogin();">
+                <div class="space-y-6">
+                    <div>
+                        <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                        <input type="password" id="admin-password" required
+                               class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700 placeholder-gray-400"
+                               placeholder="Nhập mật khẩu quản trị">
+                    </div>
+                    <div>
+                        <button type="submit" 
+                                class="w-full flex justify-center items-center px-4 py-3 border border-transparent text-lg font-bold rounded-xl shadow-lg text-white bg-indigo-600 hover:bg-indigo-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                            Đăng Nhập
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <div id="main-app" class="min-h-screen flex">
-        <aside class="w-64 bg-white p-6 border-r-4 border-indigo-50 shadow-2xl">
-            <div class="text-center border-b pb-4 mb-6">
-                <h3 class="text-xl font-extrabold text-indigo-700">Quản Lý Trung Tâm</h3>
-                <p id="header-status" class="text-sm text-gray-500 mt-1">Chưa đăng nhập</p>
-            </div>
-            <nav id="nav-bar" class="space-y-2">
-                <p class="text-xs font-semibold uppercase text-gray-400 pt-4 pb-2 border-t mt-4">CHỨC NĂNG</p>
-                <div class="space-y-2">
-                    <button onclick="switchView('dashboard')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        <span>Tổng Quan (Dashboard)</span>
-                    </button>
-                    <button onclick="switchView('students')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-9a4 4 0 100-8 4 4 0 000 8z" /></svg>
-                        <span>Danh Sách Học Sinh</span>
-                    </button>
-                    <button onclick="switchView('attendance')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-5 3h4a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                        <span>Điểm Danh</span>
-                    </button>
-                    <button onclick="switchView('tuition')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        <span>Học Phí</span>
-                    </button>
-                </div>
+
+    <div id="main-app" class="hidden min-h-screen flex">
+        
+        <aside class="w-64 bg-white p-6 shadow-xl border-r border-gray-100 flex flex-col sticky top-0 h-screen">
+            <h1 class="text-3xl font-extrabold text-indigo-700 mb-10 tracking-tight">
+                <span class="text-purple-600">Math</span>Center
+            </h1>
+            
+            <nav id="nav-bar" class="flex-grow space-y-3">
+                <button onclick="switchView('dashboard')" class="nav-btn active w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    <span>Tổng Quan (Dashboard)</span>
+                </button>
+                <button onclick="switchView('students')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm-6-9a4 4 0 100-8 4 4 0 000 8z" /></svg>
+                    <span>Danh Sách Học Sinh</span>
+                </button>
+                <button onclick="switchView('attendance')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m-5 3h4a2 2 0 002-2V7a2 2 0 00-2-2H9a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <span>Điểm Danh</span>
+                </button>
+                <button onclick="switchView('tuition')" class="nav-btn w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-gray-700 hover:bg-indigo-50 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                    <span>Học Phí</span>
+                </button>
             </nav>
+            
             <div class="mt-8 pt-4 border-t">
-                <button onclick="handleLogout()" class="w-full flex items-center space-x-3 px-4 py-3 text-base font-semibold rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3v-3m3-10h4a3 3 0 013 3v1" /></svg>
+                <p class="text-sm font-medium text-gray-500 mb-2">Trạng Thái</p>
+                <p id="header-status" class="text-sm font-bold text-green-600">Đã đăng nhập (Admin)</p>
+                <button onclick="handleLogout()" class="mt-4 w-full flex items-center justify-center space-x-2 px-4 py-2 text-sm font-semibold rounded-xl text-white bg-red-500 hover:bg-red-600 transition duration-150">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                     <span>Đăng Xuất</span>
                 </button>
             </div>
         </aside>
 
-        <div class="flex-1 overflow-y-auto p-8 main-content-area">
-            <main class="max-w-7xl mx-auto">
-                
-                <div id="dashboard" class="app-view hidden">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-8 border-b-4 border-indigo-100 pb-3">🏠 Tổng Quan Hệ Thống</h2>
+        <div class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-md p-6 sticky top-0 z-10 border-b border-gray-200">
+                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">Hệ Thống Quản Lý Trung Tâm</h2>
+            </header>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <main class="main-content-area p-8">
+                
+                <div id="dashboard" class="app-view space-y-8">
+                    <h2 class="text-3xl font-bold text-gray-800 border-b-2 pb-2">Tổng Quan (Dashboard)</h2>
+
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner max-w-lg">
+                        <div class="w-full md:w-auto">
+                            <label for="income-month-selector" class="block text-sm font-medium text-gray-700 mb-1">Chọn Tháng Xem:</label>
+                            <input type="month" id="income-month-selector" 
+                                   class="form-input-style rounded-xl border border-gray-300 shadow-sm p-3 transition duration-150">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
-                        <div class="bg-gradient-to-br from-indigo-600 to-purple-700 text-white p-6 rounded-2xl shadow-xl shadow-indigo-500/30 transform hover:scale-[1.03] transition duration-300">
-                            <p class="text-sm font-semibold opacity-90">DOANH THU CẦN THU THÁNG <span id="current-month-display"></span></p>
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-6 rounded-2xl shadow-xl shadow-indigo-500/30 transform hover:scale-[1.03] transition duration-300">
+                            <p class="text-sm font-semibold opacity-90">TỔNG HỌC PHÍ CẦN THU (THÁNG)</p>
                             <p id="dashboard-monthly-revenue" class="text-4xl font-extrabold mt-2 tracking-tight">0₫</p>
                             <div class="flex items-center justify-between mt-3 text-sm opacity-80">
-                                <input type="month" id="income-month-selector" class="bg-transparent border-b border-white border-opacity-50 focus:outline-none focus:border-opacity-100 p-1 rounded-sm cursor-pointer text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                <span class="font-light">Tính theo số buổi đã điểm danh.</span>
+                                <div class="bg-white bg-opacity-10 p-2 rounded-sm cursor-pointer text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </div>
                             </div>
                         </div>
 
@@ -873,94 +939,93 @@
                             <p class="text-sm font-semibold opacity-90">HỌC PHÍ CAO NHẤT</p>
                             <p class="text-4xl font-extrabold mt-2 tracking-tight">200.000₫</p>
                             <div class="flex items-center justify-between mt-3 text-sm opacity-80">
-                                <span class="font-light">Áp dụng cho lớp Kèm 1-1.</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.954 9.954 0 0112 1a10 10 0 010 20c-4.418 0-8-3.582-8-8 0-1.761.57-3.376 1.528-4.707M16 17v-4h4" /></svg>
+                                <span class="font-light">Lớp Kèm 1-1.</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6m-5 0v3m-3-3h.01M17 18h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2zm-4 2h4m-4 0v-3m-3 3h.01M3 8h2a2 2 0 012 2v4a2 2 0 01-2 2H3a2 2 0 01-2-2v-4a2 2 0 012-2z" /></svg>
                             </div>
                         </div>
                     </div>
-
-                    <div class="card-premium bg-white p-6 md:p-8 mt-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6 border-b pb-3">So Sánh Doanh Thu 3 Tháng Gần Nhất</h3>
-                        <div id="monthly-comparison-chart" class="flex justify-around items-end h-56">
+                    
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">So Sánh Thu Nhập 3 Tháng Gần Nhất (Cần Thu)</h3>
+                        <div id="monthly-comparison-chart" class="flex justify-around items-end h-56 p-4">
                             </div>
-                        <p class="text-center text-sm text-gray-500 mt-4">Doanh thu tính theo tổng học phí cần thu dựa trên số buổi đã điểm danh.</p>
                     </div>
 
                 </div>
 
-                <div id="students" class="app-view hidden">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-8 border-b-4 border-indigo-100 pb-3">🧑‍🎓 Quản Lý Học Sinh</h2>
+                <div id="students" class="app-view hidden space-y-8">
+                    <h2 class="text-3xl font-bold text-gray-800 border-b-2 pb-2">Quản Lý Học Sinh</h2>
 
-                    <div class="card-premium bg-white p-6 md:p-8 mb-8">
-                        <h3 class="text-xl font-bold text-indigo-700 mb-4">Thêm Học Sinh Mới</h3>
-                        <form onsubmit="handleAddStudent(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                            <div class="md:col-span-2">
-                                <label for="new-student-name" class="block text-sm font-medium text-gray-700 mb-1">Tên Học Sinh</label>
-                                <input type="text" id="new-student-name" required placeholder="Nguyễn Văn A" 
-                                       class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3">
-                            </div>
-                            <div>
-                                <label for="new-student-class" class="block text-sm font-medium text-gray-700 mb-1">Lớp Học</label>
-                                <select id="new-student-class" required 
-                                        class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 bg-white">
-                                </select>
-                            </div>
-                            <div class="md:col-span-1">
-                                <button type="submit" class="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition duration-200 shadow-md shadow-indigo-300/50">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                                    Thêm
-                                </button>
+                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Thêm Học Sinh Mới</h3>
+                        <form onsubmit="handleAddStudent(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label for="new-student-name" class="block text-sm font-medium text-gray-700 mb-1">Tên Học Sinh</label>
+                                    <input type="text" id="new-student-name" required
+                                           class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700"
+                                           placeholder="Ví dụ: Nguyễn Văn A">
+                                </div>
+                                <div>
+                                    <label for="new-student-class" class="block text-sm font-medium text-gray-700 mb-1">Lớp Học</label>
+                                    <select id="new-student-class" required
+                                            class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3 text-gray-700 bg-white">
+                                        ${CLASS_OPTIONS.map(c => `<option value="${c}">${c} (${formatCurrency(CLASS_RATES[c])})</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="submit" class="w-full h-full flex justify-center items-center space-x-1 px-4 py-3 text-base font-bold rounded-xl hover:bg-indigo-700 transition duration-200 shadow-md shadow-indigo-300/50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg> Thêm
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
 
                     <h3 class="text-2xl font-bold text-gray-800 mb-4">Danh Sách Học Sinh Hiện Có</h3>
-
                     <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner">
                         <div class="w-full md:flex-1">
                             <label for="student-search-name" class="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm theo Tên:</label>
-                            <input type="text" id="student-search-name" placeholder="Nhập tên học sinh..." 
-                                   class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3">
+                            <input type="text" id="student-search-name" oninput="renderStudentList()" placeholder="Nhập tên học sinh..." class="form-input-style block w-full rounded-xl border border-gray-300 shadow-sm p-3">
                         </div>
                         <div class="w-full md:w-1/3">
                             <label for="student-filter-class" class="block text-sm font-medium text-gray-700 mb-1">Lọc theo Lớp:</label>
-                            <select id="student-filter-class" onchange="renderStudentList()" 
-                                    class="form-input-style class-select-options block w-full rounded-xl border border-gray-300 shadow-sm p-3 bg-white">
+                            <select id="student-filter-class" onchange="renderStudentList()" class="form-input-style class-select-options block w-full rounded-xl border border-gray-300 shadow-sm p-3 bg-white">
                             </select>
                         </div>
                     </div>
 
-                    <div class="mt-6" id="student-list-container">
+                    <div id="student-list-container">
                         <p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Đang tải danh sách học sinh...</p>
                     </div>
                 </div>
 
-                <div id="attendance" class="app-view hidden">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-8 border-b-4 border-indigo-100 pb-3">✅ Quản Lý Điểm Danh (Khóa 10 Buổi)</h2>
-                    
-                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner">
+                <div id="attendance" class="app-view hidden space-y-8">
+                    <h2 class="text-3xl font-bold text-gray-800 border-b-2 pb-2">Điểm Danh</h2>
+
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner max-w-2xl">
                         <div class="w-full md:w-auto">
                             <label for="attendance-month-selector" class="block text-sm font-medium text-gray-700 mb-1">Chọn Tháng:</label>
-                            <input type="month" id="attendance-month-selector" onchange="renderAttendanceView()" 
+                            <input type="month" id="attendance-month-selector" 
                                    class="form-input-style rounded-xl border border-gray-300 shadow-sm p-3 transition duration-150">
                         </div>
                         <div class="w-full md:flex-1">
                             <label for="attendance-filter-class" class="block text-sm font-medium text-gray-700 mb-1">Lọc theo Lớp:</label>
-                            <select id="attendance-filter-class" onchange="renderAttendanceView()" 
+                            <select id="attendance-filter-class" 
                                     class="form-input-style class-select-options block w-full rounded-xl border border-gray-300 shadow-sm p-3 bg-white">
                             </select>
                         </div>
                     </div>
 
                     <div class="mt-6" id="attendance-table-container">
-                        <p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Vui lòng chọn Lớp và Tháng để điểm danh...</p>
+                        <p class="p-6 text-gray-500 text-center bg-white rounded-2xl shadow-md border border-gray-200 mt-4">Vui lòng chọn Lớp và Tháng để bắt đầu điểm danh...</p>
                     </div>
                 </div>
 
-                <div id="tuition" class="app-view hidden">
-                    <h2 class="text-3xl font-extrabold text-gray-800 mb-8 border-b-4 border-indigo-100 pb-3">💰 Quản Lý Học Phí & Doanh Thu</h2>
+                <div id="tuition" class="app-view hidden space-y-8">
+                    <h2 class="text-3xl font-bold text-gray-800 border-b-2 pb-2">Quản Lý Học Phí</h2>
 
-                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner">
+                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6 items-end p-5 bg-gray-50 rounded-2xl border border-gray-200 shadow-inner max-w-2xl">
                         <div class="w-full md:w-auto">
                             <label for="tuition-month-selector" class="block text-sm font-medium text-gray-700 mb-1">Chọn Tháng:</label>
                             <input type="month" id="tuition-month-selector" 
@@ -984,7 +1049,6 @@
     </div>
     
     <footer class="mt-12 py-6 border-t-4 border-indigo-100 text-center text-sm text-gray-500 bg-white">
-        &copy; 2024 Trung Tâm Toán Cô Huyền.
-    </footer>
+        &copy; 2025 Quản Lý Trung Tâm Toán Cô Huyền.
 </body>
 </html>
